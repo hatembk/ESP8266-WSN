@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>TP1</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+	<style type="text/css">
+   		/*canvas{
+
+  			width:600px !important;
+  			height:600px !important;
+
+			}*/
+			#canvas-holder{
+				margin-top: 20px; 
+			}
+</style>
+</head>
+<body onload="javascript:init()">
+
+
+	<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#home">Graphs</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#menu1">LED's Control</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#menu2"></a>
+  </li>
+</ul>
+
+
+<div class="tab-content">
+  <div class="tab-pane container active" id="home">
+  	
+  		 <div id="canvas-holder" class="container">
+ 	<div class="row">
+ 
+ 	<div class="col-md-6 mb-3">
+ 		<div class="card">
+ 			<div class="card-body">
+ 				<canvas id="line-chart" width="400" height="400"></canvas>
+ 			</div>
+ 		</div>
+ 	
+ 	</div>
+ 	<div class="col-md-6 ">
+ 		<div class="card">
+ 			<div class="card-body">
+ 				<canvas id="line-chart2" width="400" height="400"></canvas>
+ 			</div>
+
+ 		</div>
+ 		
+ 	</div>
+ 	</div>
+ </div>
+  </div>
+  <div class="tab-pane container fade" id="menu1">
+  	 <br><br><br>
+    <form id="led">
+        <input type="submit" value="TURN OFF"  id="ledInput">
+    </form>
+  </div>
+  <div class="tab-pane container fade" id="menu2">...</div>
+</div>
+
+
+ <script>
+ 
+var webSocket ;
+var tempPlot ;
+var humPlot ; 
+        
+     function init()
+    {
+        webSocket = new  WebSocket('ws://'+window.location.hostname +':81/') ;
+        tempPlot = new Chart( document.getElementById("line-chart"), 
+                {
+                    type:'line',
+                    data :{
+                        labels :[] ,
+                        datasets:[
+                            {
+                                data:[],
+                                label:"Temperature (C)", 
+                                borderColor :"#fc0b03" ,
+                                fill :false 
+                            }
+                        ]
+                    },
+                    options :{
+                        responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        yAxes: [{
+            ticks: {
+                beginAtZero:true
+            }
+        }]
+    }
+                    }
+                }
+            ) ; 
+        humPlot = new Chart( document.getElementById("line-chart2"), 
+                {
+                    type:'line',
+                    data :{
+                        labels :[] ,
+                        datasets:[
+                            {
+                                data:[],
+                                label:"Humidity %", 
+                                borderColor :"#3e95cd" ,
+                                fill :false 
+                            }
+                        ]
+                    },
+                    options :{
+                        responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        yAxes: [{
+            ticks: {
+                beginAtZero:true
+            }
+        }]
+    }
+                    }
+                }
+            ) ;
+
+
+        webSocket.onmessage = function(event)
+        {
+            var data = JSON.parse(event.data) ; 
+            var today = new Date();
+            var t = today.getHours() + ":" + today.getMinutes() + ":" +today.getSeconds() ;
+            addData(tempPlot ,t,data.value ) ;
+            addData(humPlot ,t,data.value ) ;
+        } ;
+
+
+    } ;
+    
+    function  addData(plot,label,data) 
+    {
+        if (plot.data.labels.length >= 15) 
+        {
+                plot.data.labels.shift() ;
+                plot.data.datasets[0].data.shift() ;
+        }
+        plot.data.labels.push(label) ;
+        plot.data.datasets[0].data.push(data) ;
+
+        plot.update() ;
+    } ;
+
+
+
+
+    function sendDataRate()
+    {
+        var dataRate =  document.getElementById("dataRateSlider").value ; 
+        webSocket.send(dataRate) ;
+        dataRate = 1.0 / dataRate ;
+        document.getElementById("dataRateLabel").innerHTML = "Rate"+dateRate.toFixed(2) +"Hz";      
+
+    } ;
+
+
+  
+
+
+ </script>
+ <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+ 
+ </body>
+</html>
